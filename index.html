@@ -13,11 +13,35 @@
     }
     html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial}
     .wrap{height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#071020 0%, #0b1220 100%)}
-    canvas{background:radial-gradient(circle at 50% 20%, rgba(79,209,197,0.04), transparent 10%), linear-gradient(180deg,#08121b,#05101a); border:3px solid rgba(255,255,255,0.04); border-radius:8px; box-shadow:0 10px 30px rgba(2,6,23,0.8)}
+    canvas{background:radial-gradient(circle at 50% 20%, rgba(79,209,197,0.04), transparent 10%), linear-gradient(180deg,#08121b,#05101a); border:3px solid rgba(255,255,255,0.04); border-radius:8px; box-shadow:0 20px 60px rgba(0,0,0,0.3); width:800px; height:500px}
     .ui{position:absolute;top:18px;left:50%;transform:translateX(-50%);color:var(--fg);text-align:center;pointer-events:none}
     .controls{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);color:var(--muted);font-size:14px}
     .score {font-weight:700;letter-spacing:2px;font-size:18px; color:var(--fg)}
     .small{font-size:12px;color:var(--muted)}
+    .restart-btn {
+      margin-top: 12px;
+      padding: 8px 16px;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      pointer-events: auto;
+      transition: all 0.3s ease;
+    }
+    .restart-btn:hover {
+      background: #3db8b0;
+      transform: scale(1.05);
+    }
+    .restart-btn:active {
+      transform: scale(0.98);
+    }
+    .restart-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
     /* make page responsive */
     @media (max-width:700px){
       canvas{width:320px;height:200px}
@@ -30,6 +54,7 @@
       <div class="ui">
         <div class="score" id="scoreboard">Player 0 — 0 Computer</div>
         <div class="small" id="message">Use mouse or ↑/↓ to move left paddle. First to 10 wins.</div>
+        <button class="restart-btn" id="restartBtn">Restart Game</button>
       </div>
       <canvas id="game" width="800" height="500"></canvas>
       <div class="controls">Controls: Mouse or Arrow Up/Down to move left paddle</div>
@@ -42,6 +67,7 @@
     const ctx = canvas.getContext('2d');
     const scoreboard = document.getElementById('scoreboard');
     const messageEl = document.getElementById('message');
+    const restartBtn = document.getElementById('restartBtn');
 
     const WIDTH = canvas.width;
     const HEIGHT = canvas.height;
@@ -214,7 +240,7 @@
           endGame('Computer wins!');
           return;
         } else {
-          pauseAndReset(-1); // ball goes left (to computer) after reset, so give direction -1 to send toward left? We want ball to go to the side of player who lost — send to player (right) so direction = 1.
+          pauseAndReset(-1); // ball goes left (to computer) after reset, so give direction -1 to send toward left? We want ball to go to the side of player who lost — send to player (right) so dire[...]
           // Actually when player concedes (ball left), give ball to player (right): direction = 1
         }
       } else if (ball.x + ballRadius > WIDTH) {
@@ -264,7 +290,34 @@
     function endGame(text) {
       running = false;
       paused = true;
-      messageEl.textContent = text + ' Refresh page to play again.';
+      messageEl.textContent = text + ' Click "Restart Game" to play again.';
+    }
+
+    // Restart game function
+    function restartGame() {
+      // Reset scores
+      playerScore = 0;
+      computerScore = 0;
+      
+      // Reset paddles to center
+      player.y = (HEIGHT - paddleHeight) / 2;
+      player.dy = 0;
+      computer.y = (HEIGHT - paddleHeight) / 2;
+      
+      // Reset ball
+      resetBall(Math.random() > 0.5 ? 1 : -1);
+      
+      // Reset game state
+      running = true;
+      paused = false;
+      
+      // Update UI
+      drawScore();
+      messageEl.textContent = 'Use mouse or ↑/↓ to move left paddle. First to 10 wins.';
+      
+      // Restart the game loop
+      lastTime = performance.now();
+      requestAnimationFrame(loop);
     }
 
     function render() {
@@ -334,12 +387,15 @@
       }
     }, {passive:true});
 
+    // Restart button click handler
+    restartBtn.addEventListener('click', restartGame);
+
     // Start the loop
     drawScore();
     requestAnimationFrame(loop);
 
     // Expose some debug helpers in console (optional)
-    window._pong = { player, computer, ball, resetBall };
+    window._pong = { player, computer, ball, resetBall, restartGame };
 
   </script>
 </body>
